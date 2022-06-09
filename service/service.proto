@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = "/service";
+message EmptyStruct {}
+
+message Error {
+    optional int64 code = 1;
+    string message = 2;
+}
+
+// USER
+message User {
+    int64 id = 1;
+    string uname = 2;
+    string email = 3;
+    optional string password = 4;
+    string role = 5;
+}
+
+message Users {
+    repeated User User = 1;
+}
+
+message AddUserStatus {
+    string response = 1;
+    User User = 2;
+    optional Error error = 3;
+}
+
+// ORDER
+message Order {
+    int64 id = 1;
+    int64 userid = 2;
+    optional string userpassword = 3;
+    int64 productid = 4;
+    int64 quantity = 5;
+    int64 totalprice = 6;
+}
+
+message Orders {
+    repeated Order Order = 1;
+}
+
+message Id {
+    int64 id = 1;
+}
+
+message ResponseStatus {
+    string response = 1;
+    optional Error error = 2;
+}
+
+message AddOrderStatus {
+    string response = 1;
+    Order Order = 2;
+    optional Error error = 3;
+}
+
+// PRODUCT
+message Product {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    int64 price = 4;
+}
+
+message AdminProduct {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    int64 price = 4;
+    int64 adminid = 5;
+    string adminpass = 6;
+}
+
+message Products {
+    repeated Product Product = 1;
+}
+
+message AddProductStatus {
+    string response = 1;
+    AdminProduct AdminProduct = 2;
+    optional Error error = 3;
+}
+
+// SERVICE GATEAWAY
+service Service {
+    rpc AllUser(EmptyStruct) returns (Users);
+    rpc OneUser(Id) returns (User);
+    rpc AddUser(User) returns (AddUserStatus);
+    rpc UpdateUser(User) returns (ResponseStatus);
+    rpc DeleteUser(User) returns (ResponseStatus);
+    rpc AllOrder(User) returns (Orders);
+    rpc OneOrder(Order) returns (Order);
+    rpc AddOrder(Order) returns (AddOrderStatus);
+    rpc UpdateOrder(Order) returns (ResponseStatus);
+    rpc DeleteOrder(Order) returns (ResponseStatus);
+    rpc AllProduct(EmptyStruct) returns (Products);
+    rpc OneProduct(Id) returns (Product);
+    rpc AddProduct(AdminProduct) returns (AddProductStatus);
+    rpc UpdateProduct(AdminProduct) returns (ResponseStatus);
+    rpc DeleteProduct(AdminProduct) returns (ResponseStatus);
+    rpc Tes(EmptyStruct) returns (ResponseStatus);
+}
