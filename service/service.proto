@@ -17,6 +17,8 @@ message User {
     string email = 3;
     optional string password = 4;
     string role = 5;
+    optional string created = 6;
+    optional string updated = 7;
 }
 
 message Users {
@@ -37,6 +39,8 @@ message Order {
     int64 productid = 4;
     int64 quantity = 5;
     int64 totalprice = 6;
+    optional string created = 7;
+    optional string updated = 8;
 }
 
 message Orders {
@@ -73,6 +77,8 @@ message AdminProduct {
     int64 price = 4;
     int64 adminid = 5;
     string adminpass = 6;
+    optional string created = 7;
+    optional string updated = 8;
 }
 
 message Products {
@@ -85,22 +91,74 @@ message AddProductStatus {
     optional Error error = 3;
 }
 
+message OauthCallback {
+    string state = 1;
+    string code = 2;
+}
+
+message ResponseBody {
+    optional Users Users = 1;
+    optional User User = 2;
+    optional AddUserStatus AddUserStatus = 3;
+    optional Orders Orders = 4;
+    optional Order Order = 5;
+    optional AddOrderStatus AddOrderStatus = 6;
+    optional Products Products = 7;
+    optional Product Product = 8;
+    optional AddProductStatus AddProductStatus = 9;
+    optional ResponseStatus ResponseStatus = 10;
+    optional string Error = 11;
+    optional RequestBody RequestBody = 12;
+    optional string String_ = 13;
+}
+
+message ResponseWrapper {
+    int64 code = 1;
+    string message = 2;
+    ResponseBody ResponseBody = 3;
+}
+
+message RequestBody {
+    optional EmptyStruct EmptyStruct = 1;
+    optional Id Id = 2;
+    optional User User = 3;
+    optional Order Order = 4;
+    optional AdminProduct AdminProduct = 5;
+    optional string String = 6;
+    optional OauthCallback OauthCallback = 7;
+}
+
+message RequestWrapper {
+    string Method = 1;
+    string Url = 2;
+    RequestBody RequestBody = 3;
+}
+
 // SERVICE GATEAWAY
 service Service {
-    rpc AllUser(EmptyStruct) returns (Users);
-    rpc OneUser(Id) returns (User);
-    rpc AddUser(User) returns (AddUserStatus);
-    rpc UpdateUser(User) returns (ResponseStatus);
-    rpc DeleteUser(User) returns (ResponseStatus);
-    rpc AllOrder(User) returns (Orders);
-    rpc OneOrder(Order) returns (Order);
-    rpc AddOrder(Order) returns (AddOrderStatus);
-    rpc UpdateOrder(Order) returns (ResponseStatus);
-    rpc DeleteOrder(Order) returns (ResponseStatus);
-    rpc AllProduct(EmptyStruct) returns (Products);
-    rpc OneProduct(Id) returns (Product);
-    rpc AddProduct(AdminProduct) returns (AddProductStatus);
-    rpc UpdateProduct(AdminProduct) returns (ResponseStatus);
-    rpc DeleteProduct(AdminProduct) returns (ResponseStatus);
-    rpc Tes(EmptyStruct) returns (ResponseStatus);
+    rpc AllUser(RequestWrapper) returns (ResponseWrapper);
+    rpc OneUser(RequestWrapper) returns (ResponseWrapper);
+    rpc AddUser(RequestBody) returns (ResponseWrapper);
+    rpc UpdateUser(RequestBody) returns (ResponseWrapper);
+    rpc DeleteUser(RequestBody) returns (ResponseWrapper);
+    rpc AllOrder(RequestWrapper) returns (ResponseWrapper);
+    rpc OneOrder(RequestWrapper) returns (ResponseWrapper);
+    rpc AddOrder(RequestBody) returns (ResponseWrapper);
+    rpc UpdateOrder(RequestBody) returns (ResponseWrapper);
+    rpc DeleteOrder(RequestBody) returns (ResponseWrapper);
+    rpc AllProduct(RequestWrapper) returns (ResponseWrapper);
+    rpc OneProduct(RequestWrapper) returns (ResponseWrapper);
+    rpc AddProduct(RequestBody) returns (ResponseWrapper);
+    rpc UpdateProduct(RequestBody) returns (ResponseWrapper);
+    rpc DeleteProduct(RequestBody) returns (ResponseWrapper);
+    rpc Tes(RequestWrapper) returns (ResponseWrapper);
+    rpc Login(RequestWrapper) returns (ResponseWrapper);
+    rpc LoginGithub(RequestWrapper) returns (ResponseWrapper);
+    rpc LoginGithubCallback(RequestWrapper) returns (ResponseWrapper);
+    rpc LoginGoogle(RequestWrapper) returns (ResponseWrapper);
+    rpc LoginGoogleCallback(RequestWrapper) returns (ResponseWrapper);
+    rpc LoginFacebook(RequestWrapper) returns (ResponseWrapper);
+    rpc LoginFacebookCallback(RequestWrapper) returns (ResponseWrapper);
+    rpc Logout(RequestWrapper) returns (ResponseWrapper);
+    rpc ReqError(RequestWrapper) returns (ResponseWrapper);
 }

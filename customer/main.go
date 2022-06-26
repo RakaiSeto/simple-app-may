@@ -14,13 +14,22 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	
 	Client = proto.NewServiceClient(conn)
-
 }
 
 func main() {
 	g := gin.Default()
 	g.GET("/hello", Tes)
+	g.POST("/login", Login)
+	g.GET("/logingithub", LoginGithub)
+	g.GET("/login/github/callback", LoginGithubCallback)
+	g.GET("/login/google", LoginGoogle)
+	g.GET("/login/google/callback", LoginGoogleCallback)
+	g.GET("/login/facebook", LoginFacebook)
+	g.GET("/login/facebook/callback", LoginFacebookCallback)
+	g.POST("/logout", Logout)
+	g.GET("/checkreq/:id", CheckError)
 	g.GET("/user", AllUser)
 	g.GET("/user/:id", OneUser)
 	g.POST("/user", PostUser)
@@ -37,4 +46,6 @@ func main() {
 	if err := g.Run(":8080"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
+	defer Rabconn.Close()
+	defer Rabchan.Close()
 }

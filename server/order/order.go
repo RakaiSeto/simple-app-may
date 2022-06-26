@@ -31,8 +31,6 @@ func AllOrder(userInput *proto.User) ([]*proto.Order, error) {
 		return nil, status.Error(codes.Code(2), err.Error())
 	}
 	if i != userInput.GetPassword() {
-		fmt.Println(i)
-		fmt.Println(userInput.GetPassword())
 		if userInput.GetPassword() == "" {
 			return nil, errors.New("please include password in request")
 		}

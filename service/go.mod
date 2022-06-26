@@ -3,6 +3,7 @@ module github.com/RakaiSeto/simple-app-may/service
 go 1.18
 
 require (
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 )

@@ -20,6 +20,8 @@ func init() {
 
 func main() {
 	g := gin.Default()
+	g.POST("/login", Login)
+	g.POST("/logout", Logout)
 	g.GET("/hello", Tes)
 	g.GET("/user", AllUser)
 	g.GET("/user/:id", OneUser)
