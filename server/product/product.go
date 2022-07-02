@@ -1,15 +1,14 @@
 package product
 
 import (
+	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/RakaiSeto/simple-app-may/db"
 	proto "github.com/RakaiSeto/simple-app-may/service"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var dbconn *sql.DB
@@ -19,175 +18,223 @@ func init() {
 	dbconn = db.Db
 }
 
-func AllProduct() ([]*proto.Product, error) {
-	rows, err := dbconn.Query("SELECT id, name, description, price FROM public.product")
+var funcCtx = context.TODO()
+
+func AllProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	rows, err := dbconn.Query("SELECT id, name, description, price, updated FROM public.product")
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
-			return nil, status.Error(codes.Code(5), "user not found")
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{
+				Code: 404,
+				Message: "not found",
+				ResponseBody: &proto.ResponseBody{
+					Error: &errString,
+				},
+			}, err
 		}
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
-	defer rows.Close()
 
 	products := make([]*proto.Product, 0)
 	for rows.Next() {
 		var product proto.Product
-		err := rows.Scan(&product.Id, &product.Name, &product.Description, &product.Price)
+		var updated int64
+		err := rows.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &updated)
 		if err != nil {
-			return nil, status.Error(codes.Code(2), err.Error())
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{
+				Code: 500,
+				Message: "unknown error",
+				ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+				},
+			}, err
 		}
+
+		updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+
+		product.Updated = &updatedString
 
 		products = append(products, &product)
 	}
 
-	return products, nil
+	return &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{Products: &proto.Products{Product: products}}}, nil
 }
 
-func OneProduct(id int) (*proto.Product, error) {
-	row := dbconn.QueryRow("SELECT id, name, description, price FROM public.product where id=$1", id)
+func OneProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	row := dbconn.QueryRow("SELECT id, name, description, price, updated FROM public.product where id=$1", input.Id)
 
 	product := proto.Product{}
-	err := row.Scan(&product.Id, &product.Name, &product.Description, &product.Price)
+	var updated int64
+	err := row.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &updated)
+	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+
+	product.Updated = &updatedString
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
-			return nil, status.Error(codes.Code(5), "user not found")
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{
+				Code: 404,
+				Message: "not found",
+				ResponseBody: &proto.ResponseBody{
+					Error: &errString,
+				},
+			}, err
 		}
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
 
-	return &product, nil
+	return &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{Product: &product}}, nil
 }
 
-func AddProduct(product *proto.AdminProduct) (*proto.AddProductStatus, error) {
-	userRow := dbconn.QueryRow("SELECT password, role FROM public.user where id=$1", product.GetAdminid())
-	var i string
-	var role string
-	err := userRow.Scan(&i, &role)
-	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set"){
-			return nil, status.Error(codes.Code(5), "user not found")
-		}
-		return nil, status.Error(codes.Code(2), err.Error())
-	}
-	if i != product.GetAdminpass() {
-		fmt.Println(i)
-		fmt.Println(product.GetAdminpass())
-		if product.GetAdminpass() == "" {
-			return nil, errors.New("please include password in request")
-		}
-		return nil, errors.New("wrong password for user")
-	}
-	if role != "admin" {
-		return nil, status.Error(codes.Code(7), "please use admin account for this request")
-	}
-	
+func AddProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 	var j int
-	row := dbconn.QueryRow("SELECT id FROM public.product WHERE name=$1", product.GetName())
+	row := dbconn.QueryRow("SELECT id FROM public.product WHERE name=$1", input.Product.GetName())
 	_ = row.Scan(&j)
 	if j != 0 {
-		return nil, status.Error(codes.Code(6), "product already exists, please change its name")
+		var errString string = "product already exists"
+		return &proto.ResponseWrapper{
+			Code: 409,
+			Message: "conflict",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, nil
 	}
 	
-	_, err = dbconn.Exec("INSERT INTO public.product (name, description, price) VALUES ($1, $2, $3)", product.GetName(), product.GetDescription(), product.GetPrice())
+	_, err := dbconn.Exec("INSERT INTO public.product (name, description, price, created, updated) VALUES ($1, $2, $3, $4, $5)", input.Product.GetName(), input.Product.GetDescription(), input.Product.GetPrice(), time.Now().Unix(), time.Now().Unix())
 	if err != nil {
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
 
-	row = dbconn.QueryRow("SELECT id FROM public.product WHERE name=$1", product.GetName())
-	err = row.Scan(&product.Id)
+	row = dbconn.QueryRow("SELECT id, created, updated FROM public.product WHERE name=$1", input.Product.GetName())
+	var created int64
+	var updated int64
+	err = row.Scan(&input.Product.Id, &created, &updated)
+
+	createdString := time.Unix(created, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+
+	input.Product.Created = &createdString
+	input.Product.Updated = &updatedString
+
 	if err != nil {
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
 
-	resp := proto.AddProductStatus{Response: "success", AdminProduct: product}
-
-	return &resp, nil
+	return &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{Product: input.Product}}, nil
 }
 
-func UpdateProduct(product *proto.AdminProduct) (*proto.ResponseStatus, error){
-	userRow := dbconn.QueryRow("SELECT password, role FROM public.user where id=$1", product.GetAdminid())
-	var i string
-	var role string
-	err := userRow.Scan(&i, &role)
-	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set"){
-			return nil, status.Error(codes.Code(5), "user not found")
-		}
-		return nil, status.Error(codes.Code(2), err.Error())
-	}
-	if i != product.GetAdminpass() {
-		fmt.Println(i)
-		fmt.Println(product.GetAdminpass())
-		if product.GetAdminpass() == "" {
-			return nil, errors.New("please include password in request")
-		}
-		return nil, errors.New("wrong password for user")
-	}
-	if role != "admin" {
-		return nil, status.Error(codes.Code(7), "please use admin account for this request")
-	}
-	
+func UpdateProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error){	
 	QueryProduct := proto.Product{}
-	row := dbconn.QueryRow("SELECT * from public.product where id = $1", product.Id)
-	err = row.Scan(&QueryProduct.Id, &QueryProduct.Name, &QueryProduct.Description, &QueryProduct.Price)
+	row := dbconn.QueryRow("SELECT * from public.product where id = $1", input.Product.Id)
+	var created int64
+	var updated int64
+	err := row.Scan(&QueryProduct.Id, &QueryProduct.Name, &QueryProduct.Description, &QueryProduct.Price, &created, &updated)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
-			return nil, status.Error(codes.Code(5), "product not found")
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{
+				Code: 404,
+				Message: "not found",
+				ResponseBody: &proto.ResponseBody{
+					Error: &errString,
+				},
+			}, err
 		}
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
 
-	if product.Name != "" {QueryProduct.Name = product.Name}
-	if product.Description != "" {QueryProduct.Description = product.Description}
-	if product.Price != 0 {QueryProduct.Price = product.Price}
+	if input.Product.Name != "" {QueryProduct.Name = input.Product.Name}
+	if input.Product.Description != "" {QueryProduct.Description = input.Product.Description}
+	if input.Product.Price != 0 {QueryProduct.Price = input.Product.Price}
 
-	_, err = dbconn.Exec("UPDATE public.product SET name=$2, description=$3, price=$4 WHERE id=$1", QueryProduct.Id, QueryProduct.Name, QueryProduct.Description, QueryProduct.Price)
+	_, err = dbconn.Exec("UPDATE public.product SET name=$2, description=$3, price=$4, updated=$5 WHERE id=$1", QueryProduct.Id, QueryProduct.Name, QueryProduct.Description, QueryProduct.Price, time.Now().Unix())
 	if err != nil {
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
 
-	return &proto.ResponseStatus{Response: "Success"}, nil
+	return &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{
+		Product: &QueryProduct,
+	}}, nil
 }
 
-func DeleteProduct(product *proto.AdminProduct) (*proto.ResponseStatus, error) {
-	userRow := dbconn.QueryRow("SELECT password, role FROM public.user where id=$1", product.GetAdminid())
-	var i string
-	var role string
-	err := userRow.Scan(&i, &role)
-	if err != nil {
-		if strings.Contains(err.Error(), "no rows in result set"){
-			return nil, status.Error(codes.Code(5), "user not found")
-		}
-		return nil, status.Error(codes.Code(2), err.Error())
-	}
-	if i != product.GetAdminpass() {
-		fmt.Println(i)
-		fmt.Println(product.GetAdminpass())
-		if product.GetAdminpass() == "" {
-			return nil, errors.New("please include password in request")
-		}
-		return nil, errors.New("wrong password for user")
-	}
-	if role != "admin" {
-		return nil, status.Error(codes.Code(7), "please use admin account for this request")
-	}
-
-	row := dbconn.QueryRow("SELECT name FROM public.product where id=$1", product.GetId())
+func DeleteProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	row := dbconn.QueryRow("SELECT name FROM public.product where id=$1", input.Product.GetId())
 
 	var name string
 	
-	err = row.Scan(&name)
+	err := row.Scan(&name)
 	if err != nil {
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	} else if name == "" {
 		varError = fmt.Errorf("product not found")
 		return nil, varError
 	}
 
-	_, err = dbconn.Exec("DELETE FROM public.product WHERE id=$1", product.GetId())
+	_, err = dbconn.Exec("DELETE FROM public.product WHERE id=$1", input.Product.GetId())
 	if err != nil {
-		return nil, status.Error(codes.Code(2), err.Error())
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
 	}
 
-	return &proto.ResponseStatus{Response: "Success"}, nil
+	return &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{
+		ResponseStatus: &proto.ResponseStatus{Response: "success deleting product"},
+	}}, nil
 }

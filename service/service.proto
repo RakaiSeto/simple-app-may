@@ -17,8 +17,9 @@ message User {
     string email = 3;
     optional string password = 4;
     string role = 5;
-    optional string created = 6;
-    optional string updated = 7;
+    optional int64 wallet = 6;
+    optional string created = 7;
+    optional string updated = 8;
 }
 
 message Users {
@@ -47,10 +48,6 @@ message Orders {
     repeated Order Order = 1;
 }
 
-message Id {
-    int64 id = 1;
-}
-
 message ResponseStatus {
     string response = 1;
     optional Error error = 2;
@@ -68,15 +65,6 @@ message Product {
     string name = 2;
     string description = 3;
     int64 price = 4;
-}
-
-message AdminProduct {
-    int64 id = 1;
-    string name = 2;
-    string description = 3;
-    int64 price = 4;
-    int64 adminid = 5;
-    string adminpass = 6;
     optional string created = 7;
     optional string updated = 8;
 }
@@ -85,15 +73,15 @@ message Products {
     repeated Product Product = 1;
 }
 
-message AddProductStatus {
-    string response = 1;
-    AdminProduct AdminProduct = 2;
-    optional Error error = 3;
-}
-
 message OauthCallback {
     string state = 1;
     string code = 2;
+}
+
+message AdminTopup {
+    float amount = 1;
+    int64 userid = 2;
+    string username = 3;
 }
 
 message ResponseBody {
@@ -105,11 +93,10 @@ message ResponseBody {
     optional AddOrderStatus AddOrderStatus = 6;
     optional Products Products = 7;
     optional Product Product = 8;
-    optional AddProductStatus AddProductStatus = 9;
-    optional ResponseStatus ResponseStatus = 10;
-    optional string Error = 11;
-    optional RequestBody RequestBody = 12;
-    optional string String_ = 13;
+    optional ResponseStatus ResponseStatus = 9;
+    optional string Error = 10;
+    optional RequestBody RequestBody = 11;
+    optional string String_ = 12;
 }
 
 message ResponseWrapper {
@@ -120,12 +107,14 @@ message ResponseWrapper {
 
 message RequestBody {
     optional EmptyStruct EmptyStruct = 1;
-    optional Id Id = 2;
+    optional int64 Id = 2;
     optional User User = 3;
     optional Order Order = 4;
-    optional AdminProduct AdminProduct = 5;
+    optional Product Product = 5;
     optional string String = 6;
     optional OauthCallback OauthCallback = 7;
+    optional string QueueUUID = 8;
+    optional AdminTopup AdminTopup = 9;
 }
 
 message RequestWrapper {
@@ -138,6 +127,7 @@ message RequestWrapper {
 service Service {
     rpc AllUser(RequestWrapper) returns (ResponseWrapper);
     rpc OneUser(RequestWrapper) returns (ResponseWrapper);
+    rpc MyUser(RequestWrapper) returns (ResponseWrapper);
     rpc AddUser(RequestBody) returns (ResponseWrapper);
     rpc UpdateUser(RequestBody) returns (ResponseWrapper);
     rpc DeleteUser(RequestBody) returns (ResponseWrapper);
@@ -152,13 +142,14 @@ service Service {
     rpc UpdateProduct(RequestBody) returns (ResponseWrapper);
     rpc DeleteProduct(RequestBody) returns (ResponseWrapper);
     rpc Tes(RequestWrapper) returns (ResponseWrapper);
-    rpc Login(RequestWrapper) returns (ResponseWrapper);
+    rpc Login(RequestBody) returns (ResponseWrapper);
     rpc LoginGithub(RequestWrapper) returns (ResponseWrapper);
     rpc LoginGithubCallback(RequestWrapper) returns (ResponseWrapper);
     rpc LoginGoogle(RequestWrapper) returns (ResponseWrapper);
     rpc LoginGoogleCallback(RequestWrapper) returns (ResponseWrapper);
     rpc LoginFacebook(RequestWrapper) returns (ResponseWrapper);
     rpc LoginFacebookCallback(RequestWrapper) returns (ResponseWrapper);
-    rpc Logout(RequestWrapper) returns (ResponseWrapper);
+    rpc AdminTopup(RequestBody) returns (ResponseWrapper);
+    rpc Logout(RequestBody) returns (ResponseWrapper);
     rpc ReqError(RequestWrapper) returns (ResponseWrapper);
 }

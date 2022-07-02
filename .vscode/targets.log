@@ -8,10 +8,12 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Jun 27 00:47:05 2022
+# Make data base, printed on Sat Jul 02 21:42:09 2022
 
 # Variables
 
+# environment
+FPS_BROWSER_APP_PROFILE_STRING = Internet Explorer
 # environment
 SYSTEMDRIVE = C:
 # environment
@@ -21,7 +23,7 @@ USERPROFILE = C:\Users\rakai
 # environment
 LOCALAPPDATA = C:\Users\rakai\AppData\Local
 # environment
-VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-59df4b2d-c0ff-4fb9-a2ed-4a81343a54cd-sock
+VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-688abd1d-68dd-437e-9fc4-cfd4749b54f9-sock
 # environment
 VSCODE_CWD = C:\Users\rakai\AppData\Local\Programs\Microsoft VS Code
 # environment
@@ -39,7 +41,9 @@ GOPATH = C:\Users\rakai\go
 # automatic
 @D = $(patsubst %/,%,$(patsubst %\,%,$(dir $@)))
 # environment
-CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_12012_IXCMLWWWAVMNZHSE
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_22228_QXFXWHASHROAUOJS
+# environment
+FPS_BROWSER_USER_PROFILE_STRING = Default
 # environment
 VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # default
@@ -95,7 +99,7 @@ MAKEFILE_LIST :=
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 12012
+VSCODE_PID = 22228
 # automatic
 ?D = $(patsubst %/,%,$(patsubst %\,%,$(dir $?)))
 # environment
@@ -106,8 +110,6 @@ ONLINESERVICES = Online Services
 <D = $(patsubst %/,%,$(patsubst %\,%,$(dir $<)))
 # environment
 VSCODE_NLS_CONFIG = {"locale":"en-us","availableLanguages":{},"_languagePackSupport":true}
-# environment
-ONEDRIVECONSUMER = C:\Users\rakai\OneDrive
 # default
 MAKE_HOST := Windows32
 # environment
@@ -219,7 +221,7 @@ PROCESSOR_REVISION = 8c01
 # environment
 PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 # variable set hash-table stats:
-# Load=103/1024=10%, Rehash=0, Collisions=10/127=8%
+# Load=104/1024=10%, Rehash=0, Collisions=10/128=8%
 
 # Pattern-specific Variable Values
 
@@ -227,7 +229,7 @@ PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 
 # Directories
 
-# . (key c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may, mtime 1655808320): 15 files, no impossibilities.
+# . (key c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may, mtime 1656583833): 15 files, no impossibilities.
 
 # 15 files, no impossibilities in 1 directories.
 
@@ -287,11 +289,12 @@ GNUmakefile:
 # No general ('VPATH' variable) search path.
 
 # strcache buffers: 1 (0) / strings = 22 / storage = 175 B / avg = 7 B
-# current buf: size = 8174 B / used = 175 B / count = 22 / avg = 7 B
+# current buf: size = 8174 B / used = 175 B / count = 22 / av 
+g = 7 B
 
 # strcache performance: lookups = 25 / hit rate = 12%
 # hash-table stats:
 # Load=22/8192=0%, Rehash=0, Collisions=0/25=0%
-# Finished Make data base on Mon Jun 27 00:47:05 2022
+# Finished Make data base on Sat Jul 02 21:42:09 2022
 
  

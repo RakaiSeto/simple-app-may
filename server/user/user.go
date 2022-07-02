@@ -1,10 +1,10 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -18,12 +18,14 @@ import (
 var dbconn *sql.DB
 type RequestBody proto.RequestBody
 
+var funcCtx = context.TODO()
+
 func init() {
 	dbconn = db.Db
 }
 
 func AllUser() (*proto.ResponseWrapper, error) {
-	rows, err := dbconn.Query("SELECT id, uname, email, role FROM public.user ORDER BY id ASC")
+	rows, err := dbconn.Query("SELECT id, uname, email FROM public.user ORDER BY id ASC")
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
 			var errString string = err.Error()
@@ -49,7 +51,7 @@ func AllUser() (*proto.ResponseWrapper, error) {
 	users := make([]*proto.User, 0)
 	for rows.Next() {
 		var user proto.User
-		err := rows.Scan(&user.Id, &user.Uname, &user.Email, &user.Role)
+		err := rows.Scan(&user.Id, &user.Uname, &user.Email)
 		if err != nil {
 			var errString string = err.Error()
 			return &proto.ResponseWrapper{
@@ -74,7 +76,7 @@ func AllUser() (*proto.ResponseWrapper, error) {
 }
 
 func OneUser(id int) (*proto.ResponseWrapper, error) {
-	row := dbconn.QueryRow("SELECT id, uname, email, role FROM public.user where id=$1", id)
+	row := dbconn.QueryRow("SELECT * FROM public.user where id=$1", id)
 
 	user := proto.User{}
 	err := row.Scan(&user.Id, &user.Uname, &user.Email, &user.Role)
@@ -98,6 +100,56 @@ func OneUser(id int) (*proto.ResponseWrapper, error) {
 			},
 		}, err
 	}
+
+	returned := &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{
+		User: &user,
+	}}
+
+	return returned, nil
+}
+
+func MyUser(token string) (*proto.ResponseWrapper, error) {
+	creden, err := proto.ParseJWT(funcCtx, token)
+	if err != nil {
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
+	}
+
+	row := dbconn.QueryRow("SELECT * FROM public.user where id=$1", creden["userid"].(float64))
+
+	user := proto.User{}
+
+	var password string
+	var created int64
+	var updated int64
+	err = row.Scan(&user.Id, &user.Uname, &user.Email, &password, &user.Role, &user.Wallet, &created, &updated)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set"){
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{
+				Code: 404,
+				Message: "not found",
+				ResponseBody: &proto.ResponseBody{
+					Error: &errString,
+				},
+			}, status.Error(codes.Code(5), "user not found")
+		}
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
+	}
+
+	
+	createdString := time.Unix(created, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+
+	user.Created = &createdString
+	user.Updated = &updatedString
 
 	returned := &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{
 		User: &user,
@@ -131,10 +183,13 @@ func AddUser(user *proto.User) (*proto.ResponseWrapper, error) {
 			ResponseBody: &proto.ResponseBody{
 				Error: &errString,
 			},
-		}, status.Error(codes.Code(6), "user already exists, please change its uname")
+		}, err
 	}
 	
-	_, err = dbconn.Exec("INSERT INTO public.user (uname, email, password, role, created, updated) VALUES ($1, $2, $3, $4, $5, $6)", user.GetUname(), user.GetEmail(), user.GetPassword(), "customer", time.Now().Unix(), time.Now().Unix())
+	unameInsert := strings.ReplaceAll(user.GetUname(), " ", "")
+	unameInsert = strings.ToLower(unameInsert)
+
+	_, err = dbconn.Exec("INSERT INTO public.user (uname, email, password, created, updated) VALUES ($1, $2, $3, $4, $5)", unameInsert, user.GetEmail(), user.GetPassword(), time.Now().Unix(), time.Now().Unix())
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -170,10 +225,16 @@ func AddUser(user *proto.User) (*proto.ResponseWrapper, error) {
 	}, nil
 }
 
-func UpdateUser(user *proto.User) (*proto.ResponseWrapper, error){
+func UpdateUser(input *proto.RequestBody) (*proto.ResponseWrapper, error){
+	creden, err := proto.ParseJWT(funcCtx, input.GetString_())
+	if err != nil {
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
+	}
+
 	QueryUser := proto.User{}
-	row := dbconn.QueryRow("SELECT * from public.user where id = $1", user.Id)
-	err := row.Scan(&QueryUser.Id, &QueryUser.Uname, &QueryUser.Email, &QueryUser.Password, &QueryUser.Role)
+	row := dbconn.QueryRow("SELECT id, uname, email, password from public.user where id = $1", creden["userid"].(float64))
+	err = row.Scan(&QueryUser.Id, &QueryUser.Uname, &QueryUser.Email, &QueryUser.Password, &QueryUser.Role)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
 			var errString string = err.Error()
@@ -183,7 +244,7 @@ func UpdateUser(user *proto.User) (*proto.ResponseWrapper, error){
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "user not found")
+			}, err
 		}
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -195,20 +256,11 @@ func UpdateUser(user *proto.User) (*proto.ResponseWrapper, error){
 		}, err
 	}
 
-	if QueryUser.GetPassword() != user.GetPassword() {
-	var errString string = "wrong password for user"
-		return &proto.ResponseWrapper{
-			Code: 401,
-			Message: "unauthorized",
-			ResponseBody: &proto.ResponseBody{
-				Error: &errString,
-			},
-		}, errors.New("wrong password for user")
-	}
-
-	if user.Uname != "" {QueryUser.Uname = user.Uname}
-	if user.Email != "" {QueryUser.Email = user.Email}
-	if *user.Password != "" {QueryUser.Password = user.Password}
+	if input.User.Uname != "" {QueryUser.Uname = input.User.Uname}
+	QueryUser.Uname = strings.ReplaceAll(QueryUser.Uname, " ", "")
+	QueryUser.Uname = strings.ToLower(QueryUser.Uname)
+	if input.User.Email != "" {QueryUser.Email = input.User.Email}
+	if *input.User.Password != "" {QueryUser.Password = input.User.Password}
 
 	_, err = dbconn.Exec("UPDATE public.user SET uname=$2, email=$3, password=$4, updated=$5 WHERE id=$1", QueryUser.Id, QueryUser.Uname, QueryUser.Email, QueryUser.Password, time.Now().Unix())
 	if err != nil {
@@ -286,6 +338,55 @@ func DeleteUser(inputUser *proto.User) (*proto.ResponseWrapper, error) {
 		}, err
 	}
 
+	proto.DeleteJWT(context.TODO(), name, db.Rdb)
+
+	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "Success"}}}, nil
+}
+
+func AdminTopup(input *proto.AdminTopup) (*proto.ResponseWrapper, error) {
+	row := dbconn.QueryRow("SELECT uname, wallet FROM public WHERE id=$1", input.Userid)
+
+	var uname string
+	var wallet float32
+
+	err := row.Scan(&uname, &wallet)
+	if err != nil {
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, nil
+	}
+
+	if uname != input.Username {
+		var errString string = "the id have different username"
+		return &proto.ResponseWrapper{
+			Code: 404,
+			Message: "not found",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, nil
+	}
+
+	wallet /= 100
+	wallet += input.Amount
+
+	_, err = dbconn.Exec("UPDATE public.user SET wallet=$1 WHERE id=$2", wallet, input.Userid)
+	if err != nil {
+		var errString string = err.Error()
+		return &proto.ResponseWrapper{
+			Code: 500,
+			Message: "unknown error",
+			ResponseBody: &proto.ResponseBody{
+				Error: &errString,
+			},
+		}, err
+	}
+
 	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "Success"}}}, nil
 }
 
@@ -294,7 +395,6 @@ func CheckRequest(input string) (*proto.ResponseWrapper, error) {
 	var message string
 	var byteSlice []byte
 	if err := row.Scan(&byteSlice, &message); err != nil {
-		fmt.Println(1)
 		errstring := err.Error()
 		return &proto.ResponseWrapper{Code: 500, Message: "Unknown", ResponseBody: &proto.ResponseBody{Error: &errstring}}, err
 	}
@@ -302,7 +402,6 @@ func CheckRequest(input string) (*proto.ResponseWrapper, error) {
 	reqBody := new(proto.ResponseBody)
 	err := protojson.Unmarshal(byteSlice, reqBody)
 	if err != nil {
-		fmt.Println(2)
 		errstring := err.Error()
 		return &proto.ResponseWrapper{Code: 500, Message: "Unknown", ResponseBody: &proto.ResponseBody{Error: &errstring}}, err
 	}

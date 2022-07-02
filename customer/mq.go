@@ -54,7 +54,7 @@ func randInt(min int, max int) int {
 
 func Produce(data *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
 	uuid := uuid.New().String()
-	data.RequestBody.String_ = &uuid
+	data.RequestBody.QueueUUID = &uuid
 
 	reqBytes := new(bytes.Buffer)
 	json.NewEncoder(reqBytes).Encode(data)

@@ -101,11 +101,12 @@ func main() {
 				panic(err)
 			}
 
-			_, err = dbconn.Exec(`INSERT INTO public.queue (id, method, url, reqbody, created, updated) VALUES ($1, $2, $3, $4, $5, $6)`, req.RequestBody.String_, req.Method, req.Url, body, time.Now().Unix(), time.Now().Unix())
+			_, err = dbconn.Exec(`INSERT INTO public.queue (id, method, url, reqbody, created, updated) VALUES ($1, $2, $3, $4, $5, $6)`, req.RequestBody.QueueUUID, req.Method, req.Url, body, time.Now().Unix(), time.Now().Unix())
 			if err != nil {
 				if strings.Contains(err.Error(), "duplicate key value violates") {
 					continue
 				}
+				fmt.Println(err)
 			}
 		}
 		}()

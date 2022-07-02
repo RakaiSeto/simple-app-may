@@ -22,15 +22,16 @@ type Credentials struct {
 	Expired int64
 }
 
-func GenerateJWT(user string, email string, oauth bool) (string, error) {
+func GenerateJWT(user string, userid int, oauth bool, admin bool) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 
 	claims["oauth"] = oauth
+	claims["admin"] = admin
 	claims["issuer"] = "RakaiApp"
 	claims["user"] = user
-	claims["email"] = email
+	claims["userid"] = userid
 	claims["expired"] = time.Now().Add(time.Hour * 24).Unix()
 
 	tokenString, err := token.SignedString(signing_string)

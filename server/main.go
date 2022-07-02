@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net"
 
-	// order "github.com/RakaiSeto/simple-app-may/server/order"
 	// product "github.com/RakaiSeto/simple-app-may/server/product"
 	auth "github.com/RakaiSeto/simple-app-may/server/auth"
+	"github.com/RakaiSeto/simple-app-may/server/product"
 	user "github.com/RakaiSeto/simple-app-may/server/user"
 	proto "github.com/RakaiSeto/simple-app-may/service"
 	"google.golang.org/grpc"
@@ -17,6 +17,8 @@ import (
 type Server struct{
 	proto.ServiceServer
 }
+var Client proto.ServiceClient
+var Context context.Context
 
 func main() {
 	listener, err := net.Listen("tcp", ":4040")
@@ -25,6 +27,15 @@ func main() {
 	}
 
 	s := Server{}
+
+	Context = context.TODO()
+
+	conn, err := grpc.Dial("localhost:0404", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	
+	Client = proto.NewServiceClient(conn)
 
 	srv := grpc.NewServer()
 	proto.RegisterServiceServer(srv, &s)
@@ -97,8 +108,8 @@ func (s *Server) LoginFacebookCallback(ctx context.Context, Request *proto.Reque
 	return response, nil
 }
 
-func (s *Server) Login(ctx context.Context, Request *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
-	user := Request.RequestBody.GetUser()
+func (s *Server) Login(ctx context.Context, Request *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	user := Request.GetUser()
 	response, err := auth.Login(user)
 	if err != nil {
 		return response, nil
@@ -106,8 +117,8 @@ func (s *Server) Login(ctx context.Context, Request *proto.RequestWrapper) (*pro
 	return response, nil
 }
 
-func (s *Server) Logout(ctx context.Context, Request *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
-	string := Request.RequestBody.GetString_()
+func (s *Server) Logout(ctx context.Context, Request *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	string := Request.GetString_()
 	response, err := auth.Logout(string)
 	if err != nil {
 		return response, nil
@@ -134,7 +145,7 @@ func (s *Server) AllUser(ctx context.Context, Request *proto.RequestWrapper) (*p
 
 func (s *Server) OneUser(ctx context.Context, Request *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
 	id := Request.RequestBody.GetId()
-	response, err := user.OneUser(int(id.GetId()))
+	response, err := user.OneUser(int(id))
 	if err != nil {
 		return response, nil
 	}
@@ -153,8 +164,7 @@ func (s *Server) AddUser(ctx context.Context, Request *proto.RequestBody) (*prot
 }
 
 func (s *Server) UpdateUser(ctx context.Context, Request *proto.RequestBody) (*proto.ResponseWrapper, error) {
-	userInput := Request.GetUser()
-	response, err := user.UpdateUser(userInput)
+	response, err := user.UpdateUser(Request)
 	if err != nil {
 		return response, nil
 	}
@@ -170,86 +180,116 @@ func (s *Server) DeleteUser(ctx context.Context, Request *proto.RequestBody) (*p
 	return response, nil 
 }
 
-// func (s *Server) AllProduct(ctx context.Context, empty *proto.EmptyStruct) (*proto.Products, error) {
-// 	response, err := product.AllProduct()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var returned proto.Products
-// 	returned.Product = response
-// 	return &returned, nil 
-// }
+func (s *Server) AllProduct(ctx context.Context, empty *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
+	response, err := product.AllProduct(empty.RequestBody)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) OneProduct(ctx context.Context, id *proto.Id) (*proto.Product, error) {
-// 	response, err := product.OneProduct(int(id.GetId()))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) OneProduct(ctx context.Context, id *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
+	response, err := product.OneProduct(id.RequestBody)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) AddProduct(ctx context.Context, productInput *proto.AdminProduct) (*proto.AddProductStatus, error) {
-// 	response, err := product.AddProduct(productInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) AddProduct(ctx context.Context, productInput *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	response, err := product.AddProduct(productInput)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) UpdateProduct(ctx context.Context, productInput *proto.AdminProduct) (*proto.ResponseStatus, error) {
-// 	response, err := product.UpdateProduct(productInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) UpdateProduct(ctx context.Context, productInput *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	response, err := product.UpdateProduct(productInput)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) DeleteProduct(ctx context.Context, productInput *proto.AdminProduct) (*proto.ResponseStatus, error) {
-// 	response, err := product.DeleteProduct(productInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) DeleteProduct(ctx context.Context, productInput *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	response, err := product.DeleteProduct(productInput)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) AllOrder(ctx context.Context, userInput *proto.User) (*proto.Orders, error) {
-// 	response, err := order.AllOrder(userInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var returned proto.Orders
-// 	returned.Order = response
-// 	return &returned, nil 
-// }
+func (s *Server) AllOrder(ctx context.Context, input *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
+	response, err := Client.AllOrder(Context, input)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) OneOrder(ctx context.Context, orderInput *proto.Order) (*proto.Order, error) {
-// 	response, err := order.OneOrder(orderInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) OneOrder(ctx context.Context, input *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
+	response, err := Client.OneOrder(Context, input)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) AddOrder(ctx context.Context, orderInput *proto.Order) (*proto.AddOrderStatus, error) {
-// 	response, err := order.AddOrder(orderInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) MyUser(ctx context.Context, input *proto.RequestWrapper) (*proto.ResponseWrapper, error) {
+	response, err := user.MyUser(input.RequestBody.GetString_())
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) UpdateOrder(ctx context.Context, orderInput *proto.Order) (*proto.ResponseStatus, error) {
-// 	response, err := order.UpdateOrder(orderInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) AdminTopup(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	response, err := user.AdminTopup(input.AdminTopup)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
 
-// func (s *Server) DeleteOrder(ctx context.Context, orderInput *proto.Order) (*proto.ResponseStatus, error) {
-// 	response, err := order.DeleteOrder(orderInput)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return response, nil 
-// }
+func (s *Server) AddOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	userGet, _ := user.MyUser(*input.String_)
+	if userGet.ResponseBody.Error != nil {
+		return userGet, nil
+	}
+
+	input.User = userGet.ResponseBody.User
+	
+	input.Id = &input.Order.Productid
+	productGet, _ := product.OneProduct(input)
+	if productGet.ResponseBody.Error != nil {
+		return productGet, nil
+	}
+	input.Product = productGet.ResponseBody.Product
+
+	fmt.Println(input.Product.GetPrice())
+	fmt.Println(input.Order.GetQuantity())
+	
+	
+	response, err := Client.AddOrder(Context, input)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
+
+func (s *Server) UpdateOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	response, err := Client.UpdateOrder(Context, input)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}
+
+func (s *Server) DeleteOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
+	response, err := Client.DeleteOrder(Context, input)
+	if err != nil {
+		return response, nil
+	}
+	return response, nil 
+}

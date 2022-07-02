@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/RakaiSeto/simple-app-may/db"
-	"github.com/RakaiSeto/simple-app-may/service"
 	proto "github.com/RakaiSeto/simple-app-may/service"
 	"github.com/antonholmquist/jason"
 	redis "github.com/go-redis/redis"
@@ -58,7 +58,7 @@ func init() {
 		RedirectURL: "http://localhost:8080/login/google/callback",
 		ClientID: os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		Scopes: []string{"https://www.googleapis.com/auth/userinfo.profile"},
+		Scopes: []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
 		Endpoint: google.Endpoint,
 	}
 	googleState = uuid.New().String()
@@ -73,10 +73,11 @@ func init() {
 }
 
 func Login(user *proto.User) (*proto.ResponseWrapper, error) {
-	userRow := dbconn.QueryRow("SELECT email, password FROM public.user where uname=$1", user.GetUname())
-	var i string
-	var email string
-	err := userRow.Scan(&i, &email)
+	userRow := dbconn.QueryRow("SELECT id, password, role FROM public.user where uname=$1", user.GetUname())
+	var id int
+	var password string
+	var role string
+	err := userRow.Scan(&id, &password, &role)
 	if err != nil {
 		if len(user.GetUname()) == 0 {
 			var errString string = "please include the uname field in request"
@@ -99,8 +100,8 @@ func Login(user *proto.User) (*proto.ResponseWrapper, error) {
 		}
 	}
 
-	if i != user.GetPassword() {
-		fmt.Println(i)
+	if password != user.GetPassword() {
+		fmt.Println(password)
 		fmt.Println(user.GetPassword())
 		if user.GetPassword() == "" {
 			var errString string = "please include password in request"
@@ -132,10 +133,19 @@ func Login(user *proto.User) (*proto.ResponseWrapper, error) {
 		return &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "login success"}, String_: dbToken}}, nil
 	}
 
-	tokenstring, err := proto.GenerateJWT(user.GetUname(), email, false)
-	if err != nil {
-		var errString string = err.Error()
-		return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
+	var tokenstring string
+	if role == "admin" {
+		tokenstring, err = proto.GenerateJWT(user.GetUname(), id, false, true)
+		if err != nil {
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
+		}
+	} else {	
+		tokenstring, err = proto.GenerateJWT(user.GetUname(), id, false, false)
+		if err != nil {
+			var errString string = err.Error()
+			return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
+		}
 	}
 
 	if err = inputJWT(user.GetUname(), tokenstring); err != nil {
@@ -155,13 +165,14 @@ func LoginGithub() (*proto.ResponseWrapper, error) {
 
 func LoginGithubCallback(state string, code string) (*proto.ResponseWrapper, error) {
 	if state != githubState {
-		return &proto.ResponseWrapper{Code: 401, Message:"unauthorized", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "state string is different"}}}, nil
+		errString := "state string is different"
+		return &proto.ResponseWrapper{Code: 401, Message:"unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
 	}
 	fmt.Println("CALLBACK")
 	data, err := getGithubInfo(code)
 	if err != nil {
 		errString := err.Error()
-		return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil	
+		return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil	
 	}
 
 	var x map[string]interface{}
@@ -169,8 +180,14 @@ func LoginGithubCallback(state string, code string) (*proto.ResponseWrapper, err
 	fmt.Printf("%v", x)
 	fmt.Printf("%v, %t", x["login"], x["login"])
 
+	resp, err := loginForOauth(x["login"].(string), "")
+	if err != nil {
+		errString := err.Error()
+		return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
+	}
+
 	welcome := "Welcome: " + x["login"].(string)
-	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: welcome}}}, nil
+	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: welcome}, String_: &resp}}, nil
 }
 
 func LoginGoogle() (*proto.ResponseWrapper, error) {
@@ -181,21 +198,28 @@ func LoginGoogle() (*proto.ResponseWrapper, error) {
 
 func LoginGoogleCallback(state string, code string) (*proto.ResponseWrapper, error) {
 	if state != googleState {
-		return &proto.ResponseWrapper{Code: 401, Message:"unauthorized", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "state string is different"}}}, nil
+		errString := "state string is different"
+		return &proto.ResponseWrapper{Code: 401, Message:"unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
 	}
 	fmt.Println("CALLBACK")
 	data, err := getGoogleInfo(code)
 	if err != nil {
 		errString := err.Error()
-		return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil	
+		return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil	
 	}
 
 	var x map[string]interface{}
 	json.Unmarshal([]byte(data), &x)
 	fmt.Printf("%v", x)
 
+	resp, err := loginForOauth(x["name"].(string), x["email"].(string))
+	if err != nil {
+		errString := err.Error()
+		return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
+	}
+
 	welcome := "Welcome: " + x["name"].(string)
-	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: welcome}}}, nil
+	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: welcome}, String_: &resp}}, nil
 }
 
 func LoginFacebook() (*proto.ResponseWrapper, error) {
@@ -206,7 +230,8 @@ func LoginFacebook() (*proto.ResponseWrapper, error) {
 
 func LoginFacebookCallback(state string, code string) (*proto.ResponseWrapper, error) {
 	if state != facebookState {
-		return &proto.ResponseWrapper{Code: 401, Message:"unauthorized", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "state string is different"}}}, nil
+		errString := "state string is different"
+		return &proto.ResponseWrapper{Code: 401, Message:"unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
 	}
 	fmt.Println("CALLBACK")
 	data, err := getFacebookInfo(code)
@@ -223,8 +248,14 @@ func LoginFacebookCallback(state string, code string) (*proto.ResponseWrapper, e
 	json.Unmarshal(bs, &x)
 	fmt.Printf("%v", x)
 
-	welcome := "Welcome: "
-	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: welcome}}}, nil
+	resp, err := loginForOauth(x["name"].(string), x["email"].(string))
+	if err != nil {
+		errString := err.Error()
+		return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
+	}
+
+	welcome := "Welcome: " + x["name"].(string)
+	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: welcome}, String_: &resp}}, nil
 }
 
 func Logout(tokenString string) (*proto.ResponseWrapper, error){
@@ -300,6 +331,7 @@ func getGoogleInfo(code string) (string, error) {
     // Response body converted to stringified JSON
 	
 	fmt.Println(resp.Status)
+	fmt.Println(resp.Body)
     respbody, _ := ioutil.ReadAll(resp.Body)
 
 	return string(respbody), nil
@@ -338,5 +370,59 @@ func getFacebookInfo(code string) (*jason.Object, error) {
 }
 
 func loginForOauth(user string, email string) (string, error) {
-	return service.GenerateJWT(user, email, true)
+	userRow := dbconn.QueryRow("SELECT id, uname, password FROM public.user WHERE email=$1", email)
+	var id int
+	var dbname string
+	var password string
+	err := userRow.Scan(&id, &dbname, &password)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set"){
+			userRow := dbconn.QueryRow("SELECT id, email, password FROM public.user WHERE uname=$1", user)
+			var id int
+			var dbemail string
+			var password string
+			err := userRow.Scan(&id, &dbemail, &password)
+			if err != nil {
+				if strings.Contains(err.Error(), "no rows in result set"){
+					_, err = dbconn.Exec("INSERT INTO public.user (uname, email, created, updated) VALUES ($1, $2, $3, $4)", user, email, time.Now().Unix(), time.Now().Unix())
+					if err != nil {
+						return err.Error(), err
+					}
+					userRow := dbconn.QueryRow("SELECT id uname=$1", user)
+					err := userRow.Scan(&id)
+					if err != nil {
+						return err.Error(), err
+					}
+					var id int
+					respsonse, err := proto.GenerateJWT(user, id, true, false)
+					if err != nil {
+						return err.Error(), err
+					}
+					inputJWT(user, respsonse)
+					if err != nil {
+						return err.Error(), err
+					}
+					return respsonse, nil
+				}
+			}
+			respsonse, err := proto.GenerateJWT(user, id, true, false)
+			if err != nil {
+				return err.Error(), err
+			}
+			inputJWT(user, respsonse)
+			if err != nil {
+				return err.Error(), err
+			}
+			return respsonse, nil
+		}
+	}
+	respsonse, err := proto.GenerateJWT(dbname, id, true, false)
+	if err != nil {
+		return err.Error(), err
+	}
+	inputJWT(dbname, respsonse)
+	if err != nil {
+		return err.Error(), err
+	}
+	return respsonse, nil
 }
