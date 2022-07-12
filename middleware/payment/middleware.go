@@ -53,7 +53,7 @@ func init() {
 	
 	
 	Q, err = Rabchan.QueueDeclare(
-		"rpc_queue", // name
+		"order_queue", // name
 		false,       // durable
 		false,       // delete when unused
 		false,       // exclusive
@@ -94,14 +94,12 @@ func main() {
 		for d := range Msgs {
 			var req Request
 			err = json.Unmarshal(d.Body, &req)
-			body := new(RequestBody)
-			body = &req.RequestBody
 			// fmt.Println("unmarshal")
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = dbconn.Exec(`INSERT INTO public.queue (id, method, url, reqbody, created, updated) VALUES ($1, $2, $3, $4, $5, $6)`, req.RequestBody.QueueUUID, req.Method, req.Url, body, time.Now().Unix(), time.Now().Unix())
+			_, err = dbconn.Exec(`INSERT INTO public.order (id, user_id, product_id, quantity, payment_method, order_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, req.RequestBody.Order.GetId(), req.RequestBody.Order.GetUserId(), req.RequestBody.Order.GetProductId(), req.RequestBody.Order.GetQuantity(), req.RequestBody.Order.GetPaymentMethod(), req.RequestBody.Order.OrderValue, time.Now().Unix(), time.Now().Unix())
 			if err != nil {
 				if strings.Contains(err.Error(), "duplicate key value violates") {
 					continue

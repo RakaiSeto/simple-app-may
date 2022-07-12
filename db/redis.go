@@ -15,5 +15,5 @@ func init() {
         Password: "", // no password set
         DB:       0,  // use default DB
     })
-	fmt.Println(Rdb.Ping(ctx).Result())
+	fmt.Println(Rdb.Ping().Result())
 }

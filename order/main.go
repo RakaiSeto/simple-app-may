@@ -55,14 +55,6 @@ func (s *Server) AddOrder(ctx context.Context, input *proto.RequestBody) (*proto
 	return response, nil 
 }
 
-func (s *Server) UpdateOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
-	response, err := UpdateOrder(input)
-	if err != nil {
-		return response, nil
-	}
-	return response, nil 
-}
-
 func (s *Server) DeleteOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 	response, err := DeleteOrder(input)
 	if err != nil {

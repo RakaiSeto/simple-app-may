@@ -86,13 +86,11 @@ func checkDb() {
 
 		fmt.Printf("%v\n", req.Id)
 
-		fmt.Println(reqBody.Order.GetProductid())
-
 		response := switchFunc(req.Method, req.Url, req.RequestBody) 
 		input := new(ResponseBody)
 		input = (*ResponseBody)(response.ResponseBody)
 		if response.ResponseBody.GetError() != "" {
-			_, err = dbconn.Exec("UPDATE public.queue SET status='failed', reqbody=$1, updated=$2 WHERE id=$3", input, time.Now().Unix(), req.Id)
+			_, err = dbconn.Exec("UPDATE public.queue SET status='failed', reqbody=$1, updated_at=$2 WHERE id=$3", input, time.Now().Unix(), req.Id)
 			if err != nil{
 				panic(err)
 			}
@@ -100,7 +98,7 @@ func checkDb() {
 			return
 		}
 
-		_, err = dbconn.Exec("UPDATE public.queue SET status='success', reqbody=$1, updated=$2 WHERE id=$3", input, time.Now().Unix(), req.Id)
+		_, err = dbconn.Exec("UPDATE public.queue SET status='success', reqbody=$1, updated_at=$2 WHERE id=$3", input, time.Now().Unix(), req.Id)
 		if err != nil{
 			panic(err)
 		}

@@ -44,7 +44,6 @@ func main() {
 	g.GET("/order", AllOrder)
 	g.GET("/order/:id", OneOrder)
 	g.POST("/order", PostOrder)
-	g.PATCH("/order/:id", PatchOrder)
 	g.DELETE("/order/:id", DeleteOrder)
 	g.POST("/admin/topup", AdminTopup)
 

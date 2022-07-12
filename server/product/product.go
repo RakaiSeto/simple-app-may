@@ -238,3 +238,16 @@ func DeleteProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 		ResponseStatus: &proto.ResponseStatus{Response: "success deleting product"},
 	}}, nil
 }
+
+func GetProduct(id int64) (*proto.Product, error) {
+	row := dbconn.QueryRow("SELECT * FROM public.product WHERE id = $1", id)
+	var created int
+	var updated int
+	var product proto.Product
+	err := row.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &created, &updated)
+	if err != nil {
+		return nil, err
+	}
+
+	return &product, nil
+}

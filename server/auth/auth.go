@@ -275,7 +275,7 @@ func Logout(tokenString string) (*proto.ResponseWrapper, error){
 }
 
 func inputJWT(uname string, token string) (error) {
-	err := redisconn.HSet(ctx, "jwtdb", uname, token).Err()
+	err := redisconn.HSet("jwtdb", uname, token).Err()
 	if err != nil {
 		return err
 	}

@@ -541,34 +541,6 @@ func PostOrder(ctx *gin.Context) {
 	}
 }
 
-func PatchOrder(ctx *gin.Context) {
-	cookie, _ := ctx.Cookie("token")
-
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		var errString string = err.Error()
-		ctx.IndentedJSON(http.StatusBadRequest, &proto.ResponseWrapper{Code: 400, Message: "bad request", ResponseBody: &proto.ResponseBody{Error: &errString}})
-		return
-	}
-
-	var order proto.Order
-
-	if err := ctx.BindJSON(&order); err != nil {
-		var errString string = err.Error()
-		ctx.IndentedJSON(http.StatusBadRequest, &proto.ResponseWrapper{Code: 400, Message: "bad request", ResponseBody: &proto.ResponseBody{Error: &errString}})
-		return
-    }
-
-	order.Id = id
-
-	req := &proto.RequestWrapper{Method: getMethod(ctx), Url: getURL(ctx), RequestBody: &proto.RequestBody{Order: &order, String_: &cookie}}
-	if response, _ := Produce(req); response.ResponseBody.GetError() == "" {
-		ctx.IndentedJSON(http.StatusOK, response)
-	} else {	
-		errorHandler(ctx, 3, response)
-	}
-}
-
 func DeleteOrder(ctx *gin.Context) {
 	jwterr := proto.ValidateJWT(ctx)
 	if jwterr != nil {
@@ -577,18 +549,11 @@ func DeleteOrder(ctx *gin.Context) {
 
 	cookie, _ := ctx.Cookie("token")
 
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		var errString string = err.Error()
-		ctx.IndentedJSON(http.StatusBadRequest, &proto.ResponseWrapper{Code: 400, Message: "bad request", ResponseBody: &proto.ResponseBody{Error: &errString}})
-		return
-	}
-
 	var order proto.Order
 
-	order.Id = id
+	order.Id = ctx.Param("id")
 
-	req := &proto.RequestWrapper{Method: getMethod(ctx), Url: getURL(ctx), RequestBody: &proto.RequestBody{Id: &id, String_: &cookie}}
+	req := &proto.RequestWrapper{Method: getMethod(ctx), Url: getURL(ctx), RequestBody: &proto.RequestBody{Order: &order, String_: &cookie}}
 	if response, _ := Produce(req); response.ResponseBody.GetError() == "" {
 		ctx.IndentedJSON(http.StatusOK, response)
 	} else {	

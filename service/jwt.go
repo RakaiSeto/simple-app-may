@@ -45,7 +45,7 @@ func GenerateJWT(user string, userid int, oauth bool, admin bool) (string, error
 }
 
 func IsJWTExist(ctx context.Context, uname string, redisConn *redis.Client) bool {
-	query, err := redisConn.HGet(ctx, "jwtdb", uname).Result()
+	query, err := redisConn.HGet("jwtdb", uname).Result()
 	if ((err != nil) || (query == ""))  {
 		if err != nil {
 			fmt.Println(err.Error())
@@ -57,7 +57,7 @@ func IsJWTExist(ctx context.Context, uname string, redisConn *redis.Client) bool
 
 
 func CheckJWT(ctx context.Context, uname string, redisConn *redis.Client) (*string, error) {
-	query, err := redisConn.HGet(ctx, "jwtdb", uname).Result()
+	query, err := redisConn.HGet("jwtdb", uname).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func DeleteJWT(ctx context.Context, uname string, redisConn *redis.Client) (erro
 		return errors.New("not logged in yet")
 	}
 
-	err := redisConn.HDel(ctx, "jwtdb", uname).Err()
+	err := redisConn.HDel("jwtdb", uname).Err()
 	if err != nil {
 		return err
 	}

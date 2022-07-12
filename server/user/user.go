@@ -76,10 +76,10 @@ func AllUser() (*proto.ResponseWrapper, error) {
 }
 
 func OneUser(id int) (*proto.ResponseWrapper, error) {
-	row := dbconn.QueryRow("SELECT * FROM public.user where id=$1", id)
+	row := dbconn.QueryRow("SELECT id, uname, email FROM public.user where id=$1", id)
 
 	user := proto.User{}
-	err := row.Scan(&user.Id, &user.Uname, &user.Email, &user.Role)
+	err := row.Scan(&user.Id, &user.Uname, &user.Email)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
 			var errString string = err.Error()
@@ -148,8 +148,8 @@ func MyUser(token string) (*proto.ResponseWrapper, error) {
 	createdString := time.Unix(created, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
 	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
 
-	user.Created = &createdString
-	user.Updated = &updatedString
+	user.CreatedAt = &createdString
+	user.UpdatedAt = &updatedString
 
 	returned := &proto.ResponseWrapper{Code: 200, Message: "success", ResponseBody: &proto.ResponseBody{
 		User: &user,
@@ -189,7 +189,7 @@ func AddUser(user *proto.User) (*proto.ResponseWrapper, error) {
 	unameInsert := strings.ReplaceAll(user.GetUname(), " ", "")
 	unameInsert = strings.ToLower(unameInsert)
 
-	_, err = dbconn.Exec("INSERT INTO public.user (uname, email, password, created, updated) VALUES ($1, $2, $3, $4, $5)", unameInsert, user.GetEmail(), user.GetPassword(), time.Now().Unix(), time.Now().Unix())
+	_, err = dbconn.Exec("INSERT INTO public.user (uname, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", unameInsert, user.GetEmail(), user.GetPassword(), time.Now().Unix(), time.Now().Unix())
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -234,7 +234,7 @@ func UpdateUser(input *proto.RequestBody) (*proto.ResponseWrapper, error){
 
 	QueryUser := proto.User{}
 	row := dbconn.QueryRow("SELECT id, uname, email, password from public.user where id = $1", creden["userid"].(float64))
-	err = row.Scan(&QueryUser.Id, &QueryUser.Uname, &QueryUser.Email, &QueryUser.Password, &QueryUser.Role)
+	err = row.Scan(&QueryUser.Id, &QueryUser.Uname, &QueryUser.Email, &QueryUser.Password)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
 			var errString string = err.Error()
@@ -262,7 +262,7 @@ func UpdateUser(input *proto.RequestBody) (*proto.ResponseWrapper, error){
 	if input.User.Email != "" {QueryUser.Email = input.User.Email}
 	if *input.User.Password != "" {QueryUser.Password = input.User.Password}
 
-	_, err = dbconn.Exec("UPDATE public.user SET uname=$2, email=$3, password=$4, updated=$5 WHERE id=$1", QueryUser.Id, QueryUser.Uname, QueryUser.Email, QueryUser.Password, time.Now().Unix())
+	_, err = dbconn.Exec("UPDATE public.user SET uname=$2, email=$3, password=$4, updated_at=$5 WHERE id=$1", QueryUser.Id, QueryUser.Uname, QueryUser.Email, QueryUser.Password, time.Now().Unix())
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -374,8 +374,9 @@ func AdminTopup(input *proto.AdminTopup) (*proto.ResponseWrapper, error) {
 
 	wallet /= 100
 	wallet += input.Amount
+	wallet *= 100
 
-	_, err = dbconn.Exec("UPDATE public.user SET wallet=$1 WHERE id=$2", wallet, input.Userid)
+	_, err = dbconn.Exec("UPDATE public.user SET wallet=$1, updated_at=$2 WHERE id=$3", wallet, time.Now().Unix(), input.Userid)
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -416,4 +417,16 @@ func (r *RequestBody) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(b, &r)
+}
+
+func GetUser(user *proto.User, id int) (*proto.User, error) {
+	row := dbconn.QueryRow("SELECT * FROM public.user WHERE id = $1", id)
+	var created int
+	var updated int
+	err := row.Scan(&user.Id, &user.Uname, &user.Email, &user.Password, &user.Role, &created, &updated)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

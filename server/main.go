@@ -258,28 +258,18 @@ func (s *Server) AddOrder(ctx context.Context, input *proto.RequestBody) (*proto
 		return userGet, nil
 	}
 
+	for i := range input.Order.ProductId {
+		productInput, err := product.GetProduct(int64(i))
+		if err != nil {
+			errString := err.Error()
+			return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
+		}
+		input.Products.Product = append(input.Products.Product, productInput)
+	}
+
 	input.User = userGet.ResponseBody.User
 	
-	input.Id = &input.Order.Productid
-	productGet, _ := product.OneProduct(input)
-	if productGet.ResponseBody.Error != nil {
-		return productGet, nil
-	}
-	input.Product = productGet.ResponseBody.Product
-
-	fmt.Println(input.Product.GetPrice())
-	fmt.Println(input.Order.GetQuantity())
-	
-	
 	response, err := Client.AddOrder(Context, input)
-	if err != nil {
-		return response, nil
-	}
-	return response, nil 
-}
-
-func (s *Server) UpdateOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
-	response, err := Client.UpdateOrder(Context, input)
 	if err != nil {
 		return response, nil
 	}
