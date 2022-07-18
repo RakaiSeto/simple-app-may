@@ -100,14 +100,9 @@ func OneOrder(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 
 func AddOrder(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 	uuid := uuid.New().String()
-	creden, err := proto.ParseJWT(funcCtx, *input.String_)
-	if err != nil {
-		var errString string = err.Error()
-		return &proto.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
-	}
 
 	// update user
-	_, err = dbconn.Exec("UPDATE public.user SET updated_at = $1 WHERE id = $2",time.Now().Unix(), creden["userid"].(float64)) 
+	_, err := dbconn.Exec("UPDATE public.user SET updated_at = $1 WHERE id = $2",time.Now().Unix(), input.User.GetId()) 
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{Code: 500, Message: "unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil

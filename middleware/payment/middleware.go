@@ -14,6 +14,7 @@ import (
 
 	"github.com/RakaiSeto/simple-app-may/db"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 
 	// server "github.com/RakaiSeto/simple-app-may/server"
@@ -87,25 +88,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Println("rabbitmq init done")
+	fmt.Println("rabbitmq init done")
 	var forever chan struct{}
 
 	go func() {
 		for d := range Msgs {
 			var req Request
 			err = json.Unmarshal(d.Body, &req)
-			// fmt.Println("unmarshal")
+			fmt.Println("unmarshal")
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = dbconn.Exec(`INSERT INTO public.order (id, user_id, product_id, quantity, payment_method, order_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, req.RequestBody.Order.GetId(), req.RequestBody.Order.GetUserId(), req.RequestBody.Order.GetProductId(), req.RequestBody.Order.GetQuantity(), req.RequestBody.Order.GetPaymentMethod(), req.RequestBody.Order.OrderValue, time.Now().Unix(), time.Now().Unix())
+			_, err = dbconn.Exec(`INSERT INTO public.order (id, user_id, product_id, quantity, payment_method, order_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, req.RequestBody.Order.GetId(), req.RequestBody.Order.GetUserId(), pq.Array(req.RequestBody.Order.GetProductId()), pq.Array(req.RequestBody.Order.GetQuantity()), req.RequestBody.Order.GetPaymentMethod(), req.RequestBody.Order.GetOrderValue(), time.Now().Unix(), time.Now().Unix())
 			if err != nil {
 				if strings.Contains(err.Error(), "duplicate key value violates") {
 					continue
 				}
 				fmt.Println(err)
 			}
+			fmt.Println("input")
 		}
 		}()
 

@@ -55,7 +55,7 @@ func checkDb() {
 	
 	for rows.Next() {
 		count++
-		var req *proto.Order
+		var req proto.Order
 		err := rows.Scan(&req.Id, &req.PaymentMethod, &req.OrderValue)
 		if err != nil{
 			fmt.Println(err)

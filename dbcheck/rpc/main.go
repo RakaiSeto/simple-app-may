@@ -47,7 +47,7 @@ func init() {
 
 func main() {
 	s := gocron.NewScheduler()
-    s.Every(5).Second().Do(checkDb)
+    s.Every(1).Second().Do(checkDb)
     <- s.Start()
 }
 

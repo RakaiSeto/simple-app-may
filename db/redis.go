@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	redis "github.com/go-redis/redis"
+	redis "github.com/go-redis/redis/v9"
 	"fmt"
 )
 
@@ -15,5 +15,5 @@ func init() {
         Password: "", // no password set
         DB:       0,  // use default DB
     })
-	fmt.Println(Rdb.Ping().Result())
+	fmt.Println(Rdb.Ping(ctx).Result())
 }

@@ -15,15 +15,13 @@ import (
 	"github.com/RakaiSeto/simple-app-may/db"
 	proto "github.com/RakaiSeto/simple-app-may/service"
 	"github.com/antonholmquist/jason"
-	redis "github.com/go-redis/redis"
+	redis "github.com/go-redis/redis/v9"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var(
@@ -73,7 +71,9 @@ func init() {
 }
 
 func Login(user *proto.User) (*proto.ResponseWrapper, error) {
-	userRow := dbconn.QueryRow("SELECT id, password, role FROM public.user where uname=$1", user.GetUname())
+	unameInsert := strings.ReplaceAll(user.GetUname(), " ", "")
+	unameInsert = strings.ToLower(unameInsert)
+	userRow := dbconn.QueryRow("SELECT id, password, role FROM public.user where uname=$1", unameInsert)
 	var id int
 	var password string
 	var role string
@@ -96,7 +96,7 @@ func Login(user *proto.User) (*proto.ResponseWrapper, error) {
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "user not found")
+			}, nil
 		}
 	}
 
@@ -275,7 +275,7 @@ func Logout(tokenString string) (*proto.ResponseWrapper, error){
 }
 
 func inputJWT(uname string, token string) (error) {
-	err := redisconn.HSet("jwtdb", uname, token).Err()
+	err := redisconn.HSet(ctx, "jwtdb", uname, token).Err()
 	if err != nil {
 		return err
 	}
@@ -384,11 +384,11 @@ func loginForOauth(user string, email string) (string, error) {
 			err := userRow.Scan(&id, &dbemail, &password)
 			if err != nil {
 				if strings.Contains(err.Error(), "no rows in result set"){
-					_, err = dbconn.Exec("INSERT INTO public.user (uname, email, created, updated) VALUES ($1, $2, $3, $4)", user, email, time.Now().Unix(), time.Now().Unix())
+					_, err = dbconn.Exec("INSERT INTO public.user (uname, email, created_at, updated_at) VALUES ($1, $2, $3, $4)", user, email, time.Now().Unix(), time.Now().Unix())
 					if err != nil {
 						return err.Error(), err
 					}
-					userRow := dbconn.QueryRow("SELECT id uname=$1", user)
+					userRow := dbconn.QueryRow("SELECT id WHERE uname=$1", user)
 					err := userRow.Scan(&id)
 					if err != nil {
 						return err.Error(), err

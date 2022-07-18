@@ -10,8 +10,6 @@ import (
 
 	"github.com/RakaiSeto/simple-app-may/db"
 	proto "github.com/RakaiSeto/simple-app-may/service"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -35,7 +33,7 @@ func AllUser() (*proto.ResponseWrapper, error) {
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "user not found")
+			}, nil
 		}
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -89,7 +87,7 @@ func OneUser(id int) (*proto.ResponseWrapper, error) {
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "user not found")
+			}, nil
 		}
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -122,7 +120,7 @@ func MyUser(token string) (*proto.ResponseWrapper, error) {
 	var password string
 	var created int64
 	var updated int64
-	err = row.Scan(&user.Id, &user.Uname, &user.Email, &password, &user.Role, &user.Wallet, &created, &updated)
+	err = row.Scan(&user.Id, &user.Uname, &user.Email, &password, &user.Role, &created, &updated)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set"){
 			var errString string = err.Error()
@@ -132,7 +130,7 @@ func MyUser(token string) (*proto.ResponseWrapper, error) {
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "user not found")
+			}, nil
 		}
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{
@@ -161,10 +159,11 @@ func MyUser(token string) (*proto.ResponseWrapper, error) {
 func AddUser(user *proto.User) (*proto.ResponseWrapper, error) {
 	row := dbconn.QueryRow("SELECT id FROM public.user WHERE uname=$1", user.GetUname())
 	var i int
-	user.Role = "customer"
+	*user.Role = "customer"
 	err := row.Scan(&i)
 	if err != nil {
-		if !strings.Contains(err.Error(), "no rows in result set") {
+		if strings.Contains(err.Error(), "no rows in result set") {
+		} else {
 			var errString string = err.Error()
 			return &proto.ResponseWrapper{
 				Code: 500,
@@ -201,7 +200,7 @@ func AddUser(user *proto.User) (*proto.ResponseWrapper, error) {
 			}, err
 	}
 
-	row = dbconn.QueryRow("SELECT id FROM public.user WHERE uname=$1", user.GetUname())
+	row = dbconn.QueryRow("SELECT id FROM public.user WHERE uname=$1", unameInsert)
 	err = row.Scan(&user.Id)
 	if err != nil {
 		var errString string = err.Error()
@@ -302,7 +301,7 @@ func DeleteUser(inputUser *proto.User) (*proto.ResponseWrapper, error) {
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "user not found")
+			}, err
 	}
 	
 	if inputUser.GetPassword() != password {
@@ -314,7 +313,7 @@ func DeleteUser(inputUser *proto.User) (*proto.ResponseWrapper, error) {
 				ResponseBody: &proto.ResponseBody{
 					Error: &errString,
 				},
-			}, status.Error(codes.Code(5), "please input password")
+			}, errors.New("please input password")
 		}
 		var errString string = "wrong password for user"
 		return &proto.ResponseWrapper{

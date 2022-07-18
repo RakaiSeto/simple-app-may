@@ -240,8 +240,8 @@ func PostUser(ctx *gin.Context) {
 		return
 	}
 
-	req := &proto.RequestWrapper{Method: getMethod(ctx), Url: getURL(ctx), RequestBody: &proto.RequestBody{User: &user}}
-	if response, _ := Produce(req); response.ResponseBody.GetError() != "" {
+	req := &proto.RequestBody{User: &user}
+	if response, _ := Client.AddUser(ctx, req); response.ResponseBody.GetError() != "" {
 		ctx.IndentedJSON(http.StatusOK, response)
 	} else {	
 		errorHandler(ctx, 1, response)

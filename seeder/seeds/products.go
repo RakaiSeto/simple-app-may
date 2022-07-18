@@ -2,6 +2,7 @@ package seeds
 
 import (
 	"fmt"
+	"time"
 
 	faker "github.com/bxcodec/faker/v3"
 )
@@ -24,13 +25,13 @@ func (s Seed) Product() {
 
 	for i := 0; i < 5; i++ {
 		//prepare the statement
-		stmt, err := s.db.Prepare(`INSERT INTO "product" (name, description, price) VALUES ($1, $2, $3)`)
+		stmt, err := s.db.Prepare(`INSERT INTO public.product (name, description, price, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`)
 		if err != nil {
 			panic(err)
 		}
 		randInt, _ := faker.RandomInt(10, 150, 1)
 		// execute query
-		_, err = stmt.Exec(faker.Word(), faker.Sentence(), randInt[0])
+		_, err = stmt.Exec(faker.Word(), faker.Sentence(), randInt[0], time.Now().Unix(), time.Now().Unix())
 		if err != nil {
 			panic(err)
 		}

@@ -8,12 +8,10 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Tue Jul 12 09:57:36 2022
+# Make data base, printed on Mon Jul 18 11:16:55 2022
 
 # Variables
 
-# environment
-FPS_BROWSER_APP_PROFILE_STRING = Internet Explorer
 # environment
 SYSTEMDRIVE = C:
 # environment
@@ -39,9 +37,7 @@ GOPATH = C:\Users\rakai\go
 # automatic
 @D = $(patsubst %/,%,$(patsubst %\,%,$(dir $@)))
 # environment
-CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_11944_ZWWXCWDUDBNNUZYR
-# environment
-FPS_BROWSER_USER_PROFILE_STRING = Default
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_18484_ZZLDXSULYJORSLFK
 # environment
 VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # default
@@ -53,7 +49,7 @@ VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # automatic
 %F = $(notdir $%)
 # environment
-VSCODE_CODE_CACHE_PATH = C:\Users\rakai\AppData\Roaming\Code\CachedData\92d25e35d9bf1a6b16f7d0758f25d48ace11e5b9
+VSCODE_CODE_CACHE_PATH = C:\Users\rakai\AppData\Roaming\Code\CachedData\b06ae3b2d2dbfe28bca3134cc6be65935cdfea6a
 # environment
 ERLANG_HOME = C:\Program Files\erl-24.3.4
 # environment
@@ -91,7 +87,7 @@ MAKEFILE_LIST :=
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 11944
+VSCODE_PID = 18484
 # automatic
 ?D = $(patsubst %/,%,$(patsubst %\,%,$(dir $?)))
 # environment
@@ -189,7 +185,7 @@ ELECTRON_RUN_AS_NODE = 1
 # environment
 TEMP = C:\Users\rakai\AppData\Local\Temp
 # environment
-VSCODE_IPC_HOOK = \\.\pipe\ea44b0de7046dc9a14abb176092c0d7c-1.69.0-main-sock
+VSCODE_IPC_HOOK = \\.\pipe\ea44b0de7046dc9a14abb176092c0d7c-1.69.1-main-sock
 # environment
 GOPROXY = https://proxy.golang.org,direct
 # default
@@ -211,7 +207,7 @@ PROCESSOR_REVISION = 8c01
 # environment
 PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 # variable set hash-table stats:
-# Load=99/1024=10%, Rehash=0, Collisions=9/123=7%
+# Load=97/1024=9%, Rehash=0, Collisions=8/121=7%
 
 # Pattern-specific Variable Values
 
@@ -219,9 +215,9 @@ PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 
 # Directories
 
-# . (key c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may, mtime 1657022967): 15 files, no impossibilities.
+# . (key c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may, mtime 1658117657): 17 files, no impossibilities.
 
-# 15 files, no impossibilities in 1 directories.
+# 17 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -278,12 +274,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 22 / storage = 175 B / avg = 7 B
-# current buf: size = 8174 B / used = 175 B / count = 22 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 24 / storage = 189 B / avg = 7 B
+# current buf: size = 8174 B / used = 189 B / count = 24 / avg = 7 B
 
-# strcache performance: lookups = 25 / hit rate = 12%
+# strcache performance: lookups = 27 / hit rate = 11%
 # hash-table stats:
-# Load=22/8192=0%, Rehash=0, Collisions=0/25=0%
-# Finished Make data base on Tue Jul 12 09:57:36 2022
+# Load=24/8192=0%, Rehash=0, Collisions=0/27=0%
+# Finished Make data base on Mon Jul 18 11:16:55 2022
 
  

@@ -248,6 +248,6 @@ func GetProduct(id int64) (*proto.Product, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("pe")
 	return &product, nil
 }

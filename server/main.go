@@ -253,23 +253,25 @@ func (s *Server) AdminTopup(ctx context.Context, input *proto.RequestBody) (*pro
 }
 
 func (s *Server) AddOrder(ctx context.Context, input *proto.RequestBody) (*proto.ResponseWrapper, error) {
-	userGet, _ := user.MyUser(*input.String_)
+	userGet, _ := user.MyUser(input.GetString_())
 	if userGet.ResponseBody.Error != nil {
 		return userGet, nil
 	}
 
-	for i := range input.Order.ProductId {
+	fmt.Println(input.Order.GetProductId())
+	var products []*proto.Product
+	for _, i := range input.Order.GetProductId() {
+		fmt.Println(int64(i))
 		productInput, err := product.GetProduct(int64(i))
 		if err != nil {
 			errString := err.Error()
 			return &proto.ResponseWrapper{Code: 500, Message:"unknown", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
 		}
-		input.Products.Product = append(input.Products.Product, productInput)
+		products = append(products, productInput)
 	}
-
-	input.User = userGet.ResponseBody.User
 	
-	response, err := Client.AddOrder(Context, input)
+	output := &proto.RequestBody{Order: input.GetOrder(), Products: &proto.Products{Product: products}, User: userGet.ResponseBody.GetUser()}
+	response, err := Client.AddOrder(Context, output)
 	if err != nil {
 		return response, nil
 	}
