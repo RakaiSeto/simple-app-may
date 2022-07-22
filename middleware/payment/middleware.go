@@ -14,7 +14,6 @@ import (
 
 	"github.com/RakaiSeto/simple-app-may/db"
 
-	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 
 	// server "github.com/RakaiSeto/simple-app-may/server"
@@ -74,6 +73,8 @@ func init() {
 
 }
 
+type JSON []interface{}
+
 func main() {
 	Msgs, err := Rabchan.Consume(
 		Q.Name, // queue
@@ -100,7 +101,10 @@ func main() {
 				panic(err)
 			}
 
-			_, err = dbconn.Exec(`INSERT INTO public.order (id, user_id, product_id, quantity, payment_method, order_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, req.RequestBody.Order.GetId(), req.RequestBody.Order.GetUserId(), pq.Array(req.RequestBody.Order.GetProductId()), pq.Array(req.RequestBody.Order.GetQuantity()), req.RequestBody.Order.GetPaymentMethod(), req.RequestBody.Order.GetOrderValue(), time.Now().Unix(), time.Now().Unix())
+			jsonData, err := json.Marshal(req.RequestBody.Order.OrderProducts)
+
+			_, err = dbconn.Exec(`INSERT INTO public.order (id, user_id, order_product, payment_method, order_value, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`, req.RequestBody.Order.GetId(), req.RequestBody.Order.GetUserId(), jsonData, req.RequestBody.Order.GetPaymentMethod(), req.RequestBody.Order.GetOrderValue(), time.Now().Unix(), time.Now().Unix())
+
 			if err != nil {
 				if strings.Contains(err.Error(), "duplicate key value violates") {
 					continue

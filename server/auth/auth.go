@@ -14,6 +14,7 @@ import (
 
 	"github.com/RakaiSeto/simple-app-may/db"
 	proto "github.com/RakaiSeto/simple-app-may/service"
+	"github.com/RakaiSeto/simple-app-may/helper"
 	"github.com/antonholmquist/jason"
 	redis "github.com/go-redis/redis/v9"
 	"github.com/google/uuid"
@@ -123,8 +124,8 @@ func Login(user *proto.User) (*proto.ResponseWrapper, error) {
 		}, errors.New("wrong password for user")
 	}
 
-	if proto.IsJWTExist(ctx, user.GetUname(), redisconn){
-		dbToken, err := proto.CheckJWT(ctx, user.GetUname(), redisconn)
+	if helper.IsJWTExist(ctx, user.GetUname(), redisconn){
+		dbToken, err := helper.CheckJWT(ctx, user.GetUname(), redisconn)
 		if err != nil {
 			var errString string = err.Error()
 			return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
@@ -135,13 +136,13 @@ func Login(user *proto.User) (*proto.ResponseWrapper, error) {
 
 	var tokenstring string
 	if role == "admin" {
-		tokenstring, err = proto.GenerateJWT(user.GetUname(), id, false, true)
+		tokenstring, err = helper.GenerateJWT(user.GetUname(), id, false, true)
 		if err != nil {
 			var errString string = err.Error()
 			return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
 		}
 	} else {	
-		tokenstring, err = proto.GenerateJWT(user.GetUname(), id, false, false)
+		tokenstring, err = helper.GenerateJWT(user.GetUname(), id, false, false)
 		if err != nil {
 			var errString string = err.Error()
 			return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
@@ -259,13 +260,13 @@ func LoginFacebookCallback(state string, code string) (*proto.ResponseWrapper, e
 }
 
 func Logout(tokenString string) (*proto.ResponseWrapper, error){
-	creden, err := proto.ParseJWT(ctx, tokenString)
+	creden, err := helper.ParseJWT(ctx, tokenString)
 	if err != nil{
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
 	}
 
-	err = proto.DeleteJWT(ctx, creden["user"].(string), redisconn)
+	err = helper.DeleteJWT(ctx, creden["user"].(string), redisconn)
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{Code: 500, Message: "unknown error", ResponseBody: &proto.ResponseBody{Error: &errString}}, err
@@ -394,7 +395,7 @@ func loginForOauth(user string, email string) (string, error) {
 						return err.Error(), err
 					}
 					var id int
-					respsonse, err := proto.GenerateJWT(user, id, true, false)
+					respsonse, err := helper.GenerateJWT(user, id, true, false)
 					if err != nil {
 						return err.Error(), err
 					}
@@ -405,7 +406,7 @@ func loginForOauth(user string, email string) (string, error) {
 					return respsonse, nil
 				}
 			}
-			respsonse, err := proto.GenerateJWT(user, id, true, false)
+			respsonse, err := helper.GenerateJWT(user, id, true, false)
 			if err != nil {
 				return err.Error(), err
 			}
@@ -416,7 +417,7 @@ func loginForOauth(user string, email string) (string, error) {
 			return respsonse, nil
 		}
 	}
-	respsonse, err := proto.GenerateJWT(dbname, id, true, false)
+	respsonse, err := helper.GenerateJWT(dbname, id, true, false)
 	if err != nil {
 		return err.Error(), err
 	}

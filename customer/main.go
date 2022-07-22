@@ -45,7 +45,6 @@ func main() {
 	g.GET("/order/:id", OneOrder)
 	g.POST("/order", PostOrder)
 	g.DELETE("/order/:id", DeleteOrder)
-	g.POST("/admin/topup", AdminTopup)
 
 	if err := g.Run(":8080"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)

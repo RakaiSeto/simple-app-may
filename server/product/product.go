@@ -9,6 +9,7 @@ import (
 
 	"github.com/RakaiSeto/simple-app-may/db"
 	proto "github.com/RakaiSeto/simple-app-may/service"
+	"github.com/RakaiSeto/simple-app-may/helper"
 )
 
 var dbconn *sql.DB
@@ -59,7 +60,7 @@ func AllProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 			}, err
 		}
 
-		updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+		updatedString := time.Unix(updated, 0).In(helper.WIB_TIME).Format(helper.TIME_LAYOUT_ALL)
 
 		product.Updated = &updatedString
 
@@ -75,7 +76,7 @@ func OneProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 	product := proto.Product{}
 	var updated int64
 	err := row.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &updated)
-	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+	updatedString := time.Unix(updated, 0).In(helper.WIB_TIME).Format(helper.TIME_LAYOUT_ALL)
 
 	product.Updated = &updatedString
 	if err != nil {
@@ -134,8 +135,8 @@ func AddProduct(input *proto.RequestBody) (*proto.ResponseWrapper, error) {
 	var updated int64
 	err = row.Scan(&input.Product.Id, &created, &updated)
 
-	createdString := time.Unix(created, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
-	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+	createdString := time.Unix(created, 0).In(helper.WIB_TIME).Format(helper.TIME_LAYOUT_ALL)
+	updatedString := time.Unix(updated, 0).In(helper.WIB_TIME).Format(helper.TIME_LAYOUT_ALL)
 
 	input.Product.Created = &createdString
 	input.Product.Updated = &updatedString

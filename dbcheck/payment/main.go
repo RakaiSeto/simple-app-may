@@ -63,7 +63,7 @@ func checkDb() {
 			continue
 		}
 
-		if req.PaymentMethod == "admin_confirmation" {
+		if req.PaymentMethod == 3 {
 			_, err = dbconn.Exec("UPDATE public.order SET payment_status='waiting_payment', updated_at=$2 WHERE id=$1", req.Id, time.Now().Unix())
 			if err != nil{
 				panic(err)
@@ -80,7 +80,7 @@ func checkDb() {
 	
 		snapResp, _ := snapClient.CreateTransaction(midtransReq)
 
-		if req.PaymentMethod == "bca"{
+		if req.PaymentMethod == 1{
 			snapResp.RedirectURL += "/#/bank-transfer/bca-va"
 		} else {
 			snapResp.RedirectURL += "/#/gopay-qris"

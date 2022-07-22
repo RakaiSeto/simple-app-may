@@ -1,4 +1,4 @@
-package service
+package helper
 
 import (
 	context "context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/RakaiSeto/simple-app-may/db"
+	"github.com/RakaiSeto/simple-app-may/service"
 	"github.com/gin-gonic/gin"
 	redis "github.com/go-redis/redis/v9"
 	jwt "github.com/golang-jwt/jwt"
@@ -93,17 +94,17 @@ func ParseJWT(ctx context.Context, token string) (jwt.MapClaims, error){
 	return nil, err
 }
 
-func ValidateJWT(ctx *gin.Context) *ResponseWrapper {
+func ValidateJWT(ctx *gin.Context) *service.ResponseWrapper {
 	cookie, err := ctx.Cookie("token")
 	if err != nil {
 		var errString string = "not login yet"
-		return &ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &ResponseBody{Error: &errString}}
+		return &service.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &service.ResponseBody{Error: &errString}}
 	}
 
 	creden, err := ParseJWT(funcCtx, cookie)
 	if err != nil {
 		var errString string = "not login yet"
-		return &ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &ResponseBody{Error: &errString}}
+		return &service.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &service.ResponseBody{Error: &errString}}
 	}
 
 	fmt.Println(creden)
@@ -112,23 +113,23 @@ func ValidateJWT(ctx *gin.Context) *ResponseWrapper {
 		var errString string = "please re-login"
 		DeleteJWT(ctx, creden["user"].(string), db.Rdb)
 		ctx.SetCookie("token", "", -1, "/", "localhost", false, true)
-		return &ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &ResponseBody{Error: &errString}}
+		return &service.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &service.ResponseBody{Error: &errString}}
 	}
 
 	if !IsJWTExist(funcCtx, creden["user"].(string), db.Rdb){
 		var errString string = "not login yet"
-		return &ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &ResponseBody{Error: &errString}}
+		return &service.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &service.ResponseBody{Error: &errString}}
 	}
 
 	tokenString, err := CheckJWT(funcCtx, creden["user"].(string), db.Rdb)
 	if err != nil {
 		var errString string = err.Error()
-		return &ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &ResponseBody{Error: &errString}}
+		return &service.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &service.ResponseBody{Error: &errString}}
 	}
 
 	if *tokenString != cookie {
 		var errString string = "please re-login"
-		return &ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &ResponseBody{Error: &errString}}
+		return &service.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &service.ResponseBody{Error: &errString}}
 	}
 
 	ctx.SetCookie("token", cookie, 30*60, "/", "localhost", false, true)

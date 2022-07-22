@@ -8,10 +8,12 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Jul 18 11:16:55 2022
+# Make data base, printed on Fri Jul 22 21:12:53 2022
 
 # Variables
 
+# environment
+FPS_BROWSER_APP_PROFILE_STRING = Internet Explorer
 # environment
 SYSTEMDRIVE = C:
 # environment
@@ -37,7 +39,9 @@ GOPATH = C:\Users\rakai\go
 # automatic
 @D = $(patsubst %/,%,$(patsubst %\,%,$(dir $@)))
 # environment
-CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_18484_ZZLDXSULYJORSLFK
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_15836_IOBJVTAAVGDJSLIW
+# environment
+FPS_BROWSER_USER_PROFILE_STRING = Default
 # environment
 VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # default
@@ -49,7 +53,7 @@ VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # automatic
 %F = $(notdir $%)
 # environment
-VSCODE_CODE_CACHE_PATH = C:\Users\rakai\AppData\Roaming\Code\CachedData\b06ae3b2d2dbfe28bca3134cc6be65935cdfea6a
+VSCODE_CODE_CACHE_PATH = C:\Users\rakai\AppData\Roaming\Code\CachedData\3b889b090b5ad5793f524b5d1d39fda662b96a2a
 # environment
 ERLANG_HOME = C:\Program Files\erl-24.3.4
 # environment
@@ -69,7 +73,7 @@ ONEDRIVE = C:\Users\rakai\OneDrive
 # makefile
 CURDIR := c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
 # automatic
 *D = $(patsubst %/,%,$(patsubst %\,%,$(dir $*)))
 # environment
@@ -87,7 +91,7 @@ MAKEFILE_LIST :=
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 18484
+VSCODE_PID = 15836
 # automatic
 ?D = $(patsubst %/,%,$(patsubst %\,%,$(dir $?)))
 # environment
@@ -119,7 +123,7 @@ MAKELEVEL := 0
 # default
 MAKE = $(MAKE_COMMAND)
 # environment
-PATH = C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\ProgramData\chocolatey\bin;C:\Program Files\erl-24.3.4\bin;C:\Program Files\Go\bin;C:\Users\rakai\scoop\shims;C:\Users\rakai\AppData\Local\Microsoft\WindowsApps;C:\Users\rakai\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\rakai\go\bin;C:\Program Files\heroku\bin;C:\Users\rakai\go\bin
+PATH = C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\ProgramData\chocolatey\bin;C:\Program Files\erl-24.3.4\bin;C:\Program Files\Go\bin;C:\Program Files\Amazon\AWSCLIV2\;C:\Users\rakai\scoop\shims;C:\Users\rakai\AppData\Local\Microsoft\WindowsApps;C:\Users\rakai\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\rakai\go\bin;C:\Program Files\heroku\bin;C:\Users\rakai\go\bin
 # environment
 ZES_ENABLE_SYSMAN = 1
 # environment
@@ -185,7 +189,7 @@ ELECTRON_RUN_AS_NODE = 1
 # environment
 TEMP = C:\Users\rakai\AppData\Local\Temp
 # environment
-VSCODE_IPC_HOOK = \\.\pipe\ea44b0de7046dc9a14abb176092c0d7c-1.69.1-main-sock
+VSCODE_IPC_HOOK = \\.\pipe\ea44b0de7046dc9a14abb176092c0d7c-1.69.2-main-sock
 # environment
 GOPROXY = https://proxy.golang.org,direct
 # default
@@ -207,7 +211,7 @@ PROCESSOR_REVISION = 8c01
 # environment
 PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 # variable set hash-table stats:
-# Load=97/1024=9%, Rehash=0, Collisions=8/121=7%
+# Load=99/1024=10%, Rehash=0, Collisions=9/123=7%
 
 # Pattern-specific Variable Values
 
@@ -215,9 +219,9 @@ PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 
 # Directories
 
-# . (key c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may, mtime 1658117657): 17 files, no impossibilities.
+# . (key c:/Users/rakai/go/src/github.com/RakaiSeto/simple-app-may, mtime 1658466601): 19 files, no impossibilities.
 
-# 17 files, no impossibilities in 1 directories.
+# 19 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -274,12 +278,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 24 / storage = 189 B / avg = 7 B
-# current buf: size = 8174 B / used = 189 B / count = 24 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 26 / storage = 204 B / avg = 7 B
+# current buf: size = 8174 B / used = 204 B / count = 26 / avg = 7 B
 
-# strcache performance: lookups = 27 / hit rate = 11%
+# strcache performance: lookups = 29 / hit rate = 10%
 # hash-table stats:
-# Load=24/8192=0%, Rehash=0, Collisions=0/27=0%
-# Finished Make data base on Mon Jul 18 11:16:55 2022
+# Load=26/8192=0%, Rehash=0, Collisions=0/29=0%
+# Finished Make data base on Fri Jul 22 21:12:53 2022
 
  

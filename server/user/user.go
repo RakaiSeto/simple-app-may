@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/RakaiSeto/simple-app-may/db"
+	"github.com/RakaiSeto/simple-app-may/helper"
 	proto "github.com/RakaiSeto/simple-app-may/service"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -107,7 +108,7 @@ func OneUser(id int) (*proto.ResponseWrapper, error) {
 }
 
 func MyUser(token string) (*proto.ResponseWrapper, error) {
-	creden, err := proto.ParseJWT(funcCtx, token)
+	creden, err := helper.ParseJWT(funcCtx, token)
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
@@ -143,8 +144,8 @@ func MyUser(token string) (*proto.ResponseWrapper, error) {
 	}
 
 	
-	createdString := time.Unix(created, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
-	updatedString := time.Unix(updated, 0).In(proto.WIB_TIME).Format(proto.TIME_LAYOUT_ALL)
+	createdString := time.Unix(created, 0).In(helper.WIB_TIME).Format(helper.TIME_LAYOUT_ALL)
+	updatedString := time.Unix(updated, 0).In(helper.WIB_TIME).Format(helper.TIME_LAYOUT_ALL)
 
 	user.CreatedAt = &createdString
 	user.UpdatedAt = &updatedString
@@ -225,7 +226,7 @@ func AddUser(user *proto.User) (*proto.ResponseWrapper, error) {
 }
 
 func UpdateUser(input *proto.RequestBody) (*proto.ResponseWrapper, error){
-	creden, err := proto.ParseJWT(funcCtx, input.GetString_())
+	creden, err := helper.ParseJWT(funcCtx, input.GetString_())
 	if err != nil {
 		var errString string = err.Error()
 		return &proto.ResponseWrapper{Code: 401, Message: "unauthorized", ResponseBody: &proto.ResponseBody{Error: &errString}}, nil
@@ -337,55 +338,7 @@ func DeleteUser(inputUser *proto.User) (*proto.ResponseWrapper, error) {
 		}, err
 	}
 
-	proto.DeleteJWT(context.TODO(), name, db.Rdb)
-
-	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "Success"}}}, nil
-}
-
-func AdminTopup(input *proto.AdminTopup) (*proto.ResponseWrapper, error) {
-	row := dbconn.QueryRow("SELECT uname, wallet FROM public WHERE id=$1", input.Userid)
-
-	var uname string
-	var wallet float32
-
-	err := row.Scan(&uname, &wallet)
-	if err != nil {
-		var errString string = err.Error()
-		return &proto.ResponseWrapper{
-			Code: 500,
-			Message: "unknown error",
-			ResponseBody: &proto.ResponseBody{
-				Error: &errString,
-			},
-		}, nil
-	}
-
-	if uname != input.Username {
-		var errString string = "the id have different username"
-		return &proto.ResponseWrapper{
-			Code: 404,
-			Message: "not found",
-			ResponseBody: &proto.ResponseBody{
-				Error: &errString,
-			},
-		}, nil
-	}
-
-	wallet /= 100
-	wallet += input.Amount
-	wallet *= 100
-
-	_, err = dbconn.Exec("UPDATE public.user SET wallet=$1, updated_at=$2 WHERE id=$3", wallet, time.Now().Unix(), input.Userid)
-	if err != nil {
-		var errString string = err.Error()
-		return &proto.ResponseWrapper{
-			Code: 500,
-			Message: "unknown error",
-			ResponseBody: &proto.ResponseBody{
-				Error: &errString,
-			},
-		}, err
-	}
+	helper.DeleteJWT(context.TODO(), name, db.Rdb)
 
 	return &proto.ResponseWrapper{Code: 200, Message:"success", ResponseBody: &proto.ResponseBody{ResponseStatus: &proto.ResponseStatus{Response: "Success"}}}, nil
 }
